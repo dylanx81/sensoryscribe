@@ -4,7 +4,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Volume2, Hand, Wind, Cherry } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Eye, Volume2, Hand, Wind, Cherry, Target, AlertTriangle, Lightbulb, Loader2 } from 'lucide-react';
+import { useState } from 'react';
 
 interface DetailedBreakdownProps {
   scores: {
@@ -63,8 +65,33 @@ const senseData = {
   }
 };
 
+interface ImprovementTips {
+  strategies: string[];
+  mistakes: string[];
+}
+
 export function DetailedBreakdown({ scores, phrases, analysis }: DetailedBreakdownProps) {
   const senses = ['sight', 'sound', 'touch', 'smell', 'taste'] as const;
+  const [improvementTips, setImprovementTips] = useState<Record<string, ImprovementTips>>({});
+  const [loadingTips, setLoadingTips] = useState<Record<string, boolean>>({});
+
+  const fetchImprovementTips = async (sense: string) => {
+    setLoadingTips(prev => ({ ...prev, [sense]: true }));
+    
+    try {
+      const response = await fetch(`/api/improvement-tips?sense=${sense}`);
+      if (response.ok) {
+        const tips = await response.json();
+        setImprovementTips(prev => ({ ...prev, [sense]: tips }));
+      } else {
+        console.error('Failed to fetch improvement tips');
+      }
+    } catch (error) {
+      console.error('Error fetching improvement tips:', error);
+    } finally {
+      setLoadingTips(prev => ({ ...prev, [sense]: false }));
+    }
+  };
 
   const getScoreLevel = (score: number) => {
     if (score >= 8) return { level: 'Excellent', color: 'bg-green-100 text-green-800' };
@@ -155,6 +182,75 @@ export function DetailedBreakdown({ scores, phrases, analysis }: DetailedBreakdo
                         </p>
                       )}
                     </div>
+
+                    {/* Improvement Tips for Low-Scoring Senses */}
+                    {score < 5 && (
+                      <div className="border-t pt-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="font-medium text-foreground flex items-center space-x-2">
+                            <Target className="h-4 w-4 text-orange-600" />
+                            <span>Targeted Improvement Tips</span>
+                          </h5>
+                          {!improvementTips[sense] && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => fetchImprovementTips(sense)}
+                              disabled={loadingTips[sense]}
+                              className="text-xs"
+                            >
+                              {loadingTips[sense] ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                  Loading...
+                                </>
+                              ) : (
+                                <>
+                                  <Lightbulb className="h-3 w-3 mr-1" />
+                                  Get Specific Tips
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+
+                        {improvementTips[sense] && (
+                          <div className="space-y-4">
+                            {/* Improvement Strategies */}
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                              <h6 className="text-sm font-medium text-green-800 mb-2 flex items-center space-x-1">
+                                <Lightbulb className="h-3 w-3" />
+                                <span>Improvement Strategies</span>
+                              </h6>
+                              <ul className="space-y-1">
+                                {improvementTips[sense].strategies.map((strategy, index) => (
+                                  <li key={index} className="text-xs text-green-700 flex items-start space-x-2">
+                                    <span className="text-green-600 mt-0.5">•</span>
+                                    <span>{strategy}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            {/* Common Mistakes */}
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                              <h6 className="text-sm font-medium text-red-800 mb-2 flex items-center space-x-1">
+                                <AlertTriangle className="h-3 w-3" />
+                                <span>Common Mistakes to Avoid</span>
+                              </h6>
+                              <ul className="space-y-1">
+                                {improvementTips[sense].mistakes.map((mistake, index) => (
+                                  <li key={index} className="text-xs text-red-700 flex items-start space-x-2">
+                                    <span className="text-red-600 mt-0.5">•</span>
+                                    <span>{mistake}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </AccordionContent>
               </Card>
