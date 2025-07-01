@@ -25,6 +25,36 @@
     --input: 220 13% 91%;
     --ring: 180 25% 25%;
     --radius: 0.5rem;
+    --surface: 0 0% 99%;
+    --surface-foreground: 220 13% 9%;
+    --on-surface: 220 13% 9%;
+    --on-surface-variant: 220 13% 45%;
+  }
+
+  .dark {
+    --background: 220 13% 9%;
+    --foreground: 0 0% 98%;
+    --card: 220 13% 12%;
+    --card-foreground: 0 0% 98%;
+    --popover: 220 13% 9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 180 25% 70%;
+    --primary-foreground: 220 13% 9%;
+    --secondary: 220 13% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 220 13% 15%;
+    --muted-foreground: 220 13% 65%;
+    --accent: 180 25% 70%;
+    --accent-foreground: 220 13% 9%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 13% 20%;
+    --input: 220 13% 20%;
+    --ring: 180 25% 70%;
+    --surface: 220 13% 11%;
+    --surface-foreground: 0 0% 98%;
+    --on-surface: 0 0% 98%;
+    --on-surface-variant: 220 13% 65%;
   }
 }
 
@@ -61,7 +91,7 @@
 }
 
 .sense-card {
-  background: hsl(var(--background));
+  background: hsl(var(--surface));
   border: 1px solid hsl(var(--border));
   border-radius: var(--radius);
   transition: all 0.2s ease-in-out;
@@ -118,4 +148,13 @@
   to {
     opacity: 1;
   }
+}
+
+/* Dark mode specific improvements */
+.dark .prose-analysis-section {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+}
+
+.dark .sense-card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
 }

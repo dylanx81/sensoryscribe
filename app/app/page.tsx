@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BookText, Sparkles, BarChart, Lightbulb, BookOpen } from 'lucide-react';
+import { BookText, Sparkles, BarChart, Lightbulb, BookOpen, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,8 @@ import { SensoryScoreChart } from '@/components/sensory-score-chart';
 import { DetailedBreakdown } from '@/components/detailed-breakdown';
 import { ImprovementSuggestions } from '@/components/improvement-suggestions';
 import { GenreExamples } from '@/components/genre-examples';
+import { RewriteSuggester } from '@/components/rewrite-suggester';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface AnalysisResult {
   id: string;
@@ -89,9 +91,12 @@ export default function Home() {
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-sm bg-background/80 border-b border-border">
         <div className="container-max py-4">
-          <div className="flex items-center space-x-2">
-            <BookText className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-serif font-bold text-foreground">Sensory Scribe</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <BookText className="h-6 w-6 text-primary" />
+              <h1 className="text-xl font-serif font-bold text-foreground">Sensory Scribe</h1>
+            </div>
+            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -152,6 +157,25 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Rewrite Suggester Section */}
+      <section className="py-16 bg-background">
+        <div className="container-max">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-8 animate-fade-in-up">
+              <h3 className="text-3xl font-serif font-bold text-foreground mb-2">
+                AI-Powered Rewrite Suggestions
+              </h3>
+              <p className="text-muted-foreground">
+                Get targeted suggestions to enhance the sensory richness of your prose
+              </p>
+            </div>
+            <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+              <RewriteSuggester />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Results Section */}
       {analysisResult && (
         <section id="results-section" className="py-16 bg-muted/30">
@@ -169,7 +193,7 @@ export default function Home() {
               <Card className="prose-analysis-section animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                 <CardContent className="p-6">
                   <Tabs defaultValue="scores" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="grid w-full grid-cols-5">
                       <TabsTrigger value="scores" className="flex items-center space-x-2">
                         <BarChart className="h-4 w-4" />
                         <span className="hidden sm:inline">Sensory Scores</span>
@@ -184,6 +208,11 @@ export default function Home() {
                         <Lightbulb className="h-4 w-4" />
                         <span className="hidden sm:inline">Improvement Tips</span>
                         <span className="sm:hidden">Tips</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="rewrite" className="flex items-center space-x-2">
+                        <Wand2 className="h-4 w-4" />
+                        <span className="hidden sm:inline">Rewrite Suggester</span>
+                        <span className="sm:hidden">Rewrite</span>
                       </TabsTrigger>
                       <TabsTrigger value="examples" className="flex items-center space-x-2">
                         <BookText className="h-4 w-4" />
@@ -206,6 +235,10 @@ export default function Home() {
 
                     <TabsContent value="suggestions" className="mt-6">
                       <ImprovementSuggestions scores={analysisResult.sensory_scores} />
+                    </TabsContent>
+
+                    <TabsContent value="rewrite" className="mt-6">
+                      <RewriteSuggester />
                     </TabsContent>
 
                     <TabsContent value="examples" className="mt-6">
