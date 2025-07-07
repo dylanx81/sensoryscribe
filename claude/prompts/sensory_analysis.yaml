@@ -1,0 +1,66 @@
+name: "Sensory Analysis for Fiction Writing"
+description: "Analyzes fiction text for sensory details across the five senses and provides genre-specific feedback"
+
+prompt: |
+  You are an expert fiction editor specializing in sensory writing analysis. Analyze the following text for sensory details and provide constructive feedback.
+
+  TEXT TO ANALYZE:
+  """
+  {{text}}
+  """
+
+  GENRE: {{genre}}
+  FOCUS SENSE: {{sense}}
+
+  Please provide your analysis in the following JSON format:
+
+  {
+    "radar_scores": {
+      "sight": [score 1-10],
+      "sound": [score 1-10], 
+      "touch": [score 1-10],
+      "taste": [score 1-10],
+      "smell": [score 1-10]
+    },
+    "feedback": "[Single paragraph of writing suggestions specific to the genre and focus sense]"
+  }
+
+  SCORING CRITERIA (1-10 scale):
+  - 1-2: Minimal sensory details, mostly abstract or conceptual
+  - 3-4: Basic sensory details present but generic
+  - 5-6: Moderate sensory details with some specificity
+  - 7-8: Rich sensory details that enhance the narrative
+  - 9-10: Exceptional sensory immersion that serves the story
+
+  FEEDBACK GUIDELINES:
+  - Focus on how sensory details can enhance the {{genre}} genre specifically
+  - If {{sense}} is not "All Senses", emphasize that particular sense
+  - Provide specific, actionable suggestions
+  - Mention what's working well and what needs improvement
+  - Keep feedback to 100-150 words
+  - Be encouraging but constructive
+
+  GENRE-SPECIFIC CONSIDERATIONS:
+  - Romance: Sensory details should enhance emotional connection and intimacy
+  - Thriller: Use sensory cues to build tension and danger
+  - Fantasy: Sensory details aid worldbuilding and magical immersion
+  - Horror: Sensory elements should create atmosphere and dread
+  - Literary Fiction: Sensory details should serve character development and themes
+  - Mystery: Sensory clues should support plot development
+  - Science Fiction: Sensory details should enhance futuristic/alien environments
+
+parameters:
+  - name: text
+    type: string
+    required: true
+    description: "The fiction text to analyze"
+  
+  - name: genre
+    type: string
+    required: true
+    description: "The genre of the fiction (Romance, Thriller, Fantasy, Horror, Literary Fiction, Mystery, Science Fiction)"
+  
+  - name: sense
+    type: string
+    required: true
+    description: "The sense to focus on (All Senses, Sight, Sound, Touch, Taste, Smell)"
