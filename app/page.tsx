@@ -4,6 +4,8 @@ import { useState } from 'react';
 import InputForm from '@/components/InputForm';
 import SensoryRadarChart from '@/components/RadarChart';
 import FeedbackPanel from '@/components/FeedbackPanel';
+import ExportButton from '@/components/ExportButton';
+import { saveDraft, SensoryDraft } from '@/lib/localStorage';
 
 interface AnalysisResult {
   radar_scores: {
@@ -20,10 +22,12 @@ export default function Home() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentInput, setCurrentInput] = useState<{ text: string; genre: string; sense: string } | null>(null);
 
   const handleAnalyze = async (data: { text: string; genre: string; sense: string }) => {
     setIsLoading(true);
     setError(null);
+    setCurrentInput(data);
     
     try {
       const response = await fetch('/api/analyze', {
@@ -41,11 +45,38 @@ export default function Home() {
 
       const result: AnalysisResult = await response.json();
       setAnalysisResult(result);
+
+      // Auto-save the draft with analysis results
+      if (data.text.trim() && data.genre) {
+        saveDraft({
+          text: data.text,
+          genre: data.genre,
+          sense: data.sense,
+          analysis: result
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDraftLoaded = (draft: SensoryDraft) => {
+    // Load the analysis results if they exist
+    if (draft.analysis) {
+      setAnalysisResult(draft.analysis);
+      setError(null);
+    } else {
+      // Clear results if no analysis in the draft
+      setAnalysisResult(null);
+    }
+    
+    setCurrentInput({
+      text: draft.text,
+      genre: draft.genre,
+      sense: draft.sense
+    });
   };
 
   return (
@@ -62,11 +93,28 @@ export default function Home() {
       <main className="max-w-7xl mx-auto p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[calc(100vh-200px)]">
           {/* Left Panel - Input */}
-          <InputForm onAnalyze={handleAnalyze} isLoading={isLoading} />
+          <InputForm 
+            onAnalyze={handleAnalyze} 
+            isLoading={isLoading}
+            onDraftLoaded={handleDraftLoaded}
+          />
 
           {/* Right Panel - Results */}
           <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            <h2 className="text-xl font-semibold mb-4 text-white">Analysis Results</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-white">Analysis Results</h2>
+              {analysisResult && currentInput && (
+                <ExportButton 
+                  data={{
+                    text: currentInput.text,
+                    genre: currentInput.genre,
+                    sense: currentInput.sense,
+                    radarScores: analysisResult.radar_scores,
+                    feedback: analysisResult.feedback
+                  }}
+                />
+              )}
+            </div>
             
             {/* Error State */}
             {error && (
@@ -93,6 +141,13 @@ export default function Home() {
               feedback={analysisResult?.feedback} 
               isLoading={isLoading}
             />
+
+            {/* Auto-save indicator */}
+            {analysisResult && currentInput && (
+              <div className="mt-4 p-2 bg-gray-700 rounded text-xs text-gray-400 text-center">
+                💾 Analysis automatically saved with draft
+              </div>
+            )}
           </div>
         </div>
       </main>

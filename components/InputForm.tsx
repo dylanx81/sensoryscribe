@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { saveDraft, getLatestDraft, getDrafts, formatDraftDate, SensoryDraft } from '@/lib/localStorage';
 
 interface InputFormProps {
   onAnalyze: (data: {
@@ -9,12 +11,20 @@ interface InputFormProps {
     sense: string;
   }) => void;
   isLoading?: boolean;
+  onDraftLoaded?: (draft: SensoryDraft) => void;
 }
 
-export default function InputForm({ onAnalyze, isLoading = false }: InputFormProps) {
+export default function InputForm({ onAnalyze, isLoading = false, onDraftLoaded }: InputFormProps) {
   const [text, setText] = useState('');
   const [genre, setGenre] = useState('');
   const [sense, setSense] = useState('All Senses');
+  const [showDrafts, setShowDrafts] = useState(false);
+  const [drafts, setDrafts] = useState<SensoryDraft[]>([]);
+  const [saveMessage, setSaveMessage] = useState('');
+
+  useEffect(() => {
+    setDrafts(getDrafts());
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,9 +33,119 @@ export default function InputForm({ onAnalyze, isLoading = false }: InputFormPro
     }
   };
 
+  const handleSaveDraft = () => {
+    if (!text.trim() || !genre) {
+      setSaveMessage('Please enter text and select a genre before saving.');
+      setTimeout(() => setSaveMessage(''), 3000);
+      return;
+    }
+
+    const success = saveDraft({ text, genre, sense });
+    if (success) {
+      setSaveMessage('Draft saved successfully!');
+      setDrafts(getDrafts()); // Refresh drafts list
+    } else {
+      setSaveMessage('Failed to save draft. Please try again.');
+    }
+    setTimeout(() => setSaveMessage(''), 3000);
+  };
+
+  const handleLoadDraft = (draft: SensoryDraft) => {
+    setText(draft.text);
+    setGenre(draft.genre);
+    setSense(draft.sense);
+    setShowDrafts(false);
+    
+    // If the draft has analysis results, load them too
+    if (draft.analysis && onDraftLoaded) {
+      onDraftLoaded(draft);
+    }
+
+    setSaveMessage('Draft loaded successfully!');
+    setTimeout(() => setSaveMessage(''), 3000);
+  };
+
+  const handleLoadLatest = () => {
+    const latest = getLatestDraft();
+    if (latest) {
+      handleLoadDraft(latest);
+    } else {
+      setSaveMessage('No saved drafts found.');
+      setTimeout(() => setSaveMessage(''), 3000);
+    }
+  };
+
   return (
     <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-      <h2 className="text-xl font-semibold mb-4 text-white">Input Panel</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-white">Input Panel</h2>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleLoadLatest}
+            disabled={isLoading}
+            className="bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600"
+          >
+            Load Latest
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDrafts(!showDrafts)}
+            disabled={isLoading}
+            className="bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600"
+          >
+            All Drafts ({drafts.length})
+          </Button>
+        </div>
+      </div>
+
+      {/* Save/Load Message */}
+      {saveMessage && (
+        <div className={`mb-4 p-3 rounded-lg text-sm ${
+          saveMessage.includes('success') 
+            ? 'bg-green-900 border border-green-700 text-green-200'
+            : 'bg-yellow-900 border border-yellow-700 text-yellow-200'
+        }`}>
+          {saveMessage}
+        </div>
+      )}
+
+      {/* Drafts List */}
+      {showDrafts && (
+        <div className="mb-4 bg-gray-700 rounded-lg p-4 max-h-64 overflow-y-auto">
+          <h3 className="text-sm font-medium text-gray-300 mb-2">Saved Drafts</h3>
+          {drafts.length === 0 ? (
+            <p className="text-sm text-gray-400">No saved drafts yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {drafts.map((draft, index) => (
+                <div
+                  key={draft.timestamp}
+                  className="flex justify-between items-start p-2 bg-gray-600 rounded cursor-pointer hover:bg-gray-500 transition-colors"
+                  onClick={() => handleLoadDraft(draft)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-200 truncate">
+                      {draft.text.slice(0, 50)}...
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {draft.genre} • {draft.sense} • {formatDraftDate(draft.timestamp)}
+                    </p>
+                  </div>
+                  <div className="ml-2 text-xs text-gray-400">
+                    #{index + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -84,13 +204,25 @@ export default function InputForm({ onAnalyze, isLoading = false }: InputFormPro
           </div>
         </div>
         
-        <button 
-          type="submit"
-          disabled={isLoading || !text.trim() || !genre}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors"
-        >
-          {isLoading ? 'Analyzing...' : 'Analyze Sensory Details'}
-        </button>
+        <div className="flex gap-2">
+          <Button
+            type="submit"
+            disabled={isLoading || !text.trim() || !genre}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600"
+          >
+            {isLoading ? 'Analyzing...' : 'Analyze Sensory Details'}
+          </Button>
+          
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSaveDraft}
+            disabled={isLoading}
+            className="bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600"
+          >
+            Save Draft
+          </Button>
+        </div>
       </form>
     </div>
   );
