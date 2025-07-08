@@ -5,6 +5,7 @@ import InputForm from '@/components/InputForm';
 import SensoryRadarChart from '@/components/RadarChart';
 import FeedbackPanel from '@/components/FeedbackPanel';
 import ExportButton from '@/components/ExportButton';
+import RewriteSuggestions from '@/components/RewriteSuggestions';
 import { saveDraft, SensoryDraft } from '@/lib/localStorage';
 
 interface AnalysisResult {
@@ -141,6 +142,17 @@ export default function Home() {
               feedback={analysisResult?.feedback} 
               isLoading={isLoading}
             />
+
+            {/* Rewrite Suggestions */}
+            {analysisResult && currentInput && (
+              <div className="mt-6">
+                <RewriteSuggestions
+                  originalText={currentInput.text}
+                  genre={currentInput.genre}
+                  radarScores={analysisResult.radar_scores}
+                />
+              </div>
+            )}
 
             {/* Auto-save indicator */}
             {analysisResult && currentInput && (
