@@ -113,3 +113,60 @@ export const formatDraftDate = (timestamp: string): string => {
     return 'Unknown date';
   }
 };
+
+// Usage limit functionality
+const USAGE_STORAGE_KEY = 'sensory-scribe-usage';
+const MAX_USAGE_PER_SESSION = 3;
+
+// Get current usage count
+export const getUsageCount = (): number => {
+  if (!isLocalStorageAvailable()) return 0;
+  
+  try {
+    const usage = localStorage.getItem(USAGE_STORAGE_KEY);
+    return usage ? parseInt(usage, 10) : 0;
+  } catch (error) {
+    console.error('Error reading usage count:', error);
+    return 0;
+  }
+};
+
+// Check if user can still use the app
+export const canUseApp = (): boolean => {
+  const currentUsage = getUsageCount();
+  return currentUsage < MAX_USAGE_PER_SESSION;
+};
+
+// Increment usage counter
+export const incrementUsage = (): boolean => {
+  if (!isLocalStorageAvailable()) return false;
+  
+  try {
+    const currentUsage = getUsageCount();
+    const newUsage = currentUsage + 1;
+    localStorage.setItem(USAGE_STORAGE_KEY, newUsage.toString());
+    return true;
+  } catch (error) {
+    console.error('Error incrementing usage:', error);
+    return false;
+  }
+};
+
+// Get remaining analyses count
+export const getRemainingAnalyses = (): number => {
+  const currentUsage = getUsageCount();
+  return Math.max(0, MAX_USAGE_PER_SESSION - currentUsage);
+};
+
+// Reset usage count (for testing or new sessions)
+export const resetUsageCount = (): boolean => {
+  if (!isLocalStorageAvailable()) return false;
+  
+  try {
+    localStorage.removeItem(USAGE_STORAGE_KEY);
+    return true;
+  } catch (error) {
+    console.error('Error resetting usage count:', error);
+    return false;
+  }
+};

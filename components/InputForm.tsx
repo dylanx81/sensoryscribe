@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { saveDraft, getLatestDraft, getDrafts, formatDraftDate, SensoryDraft } from '@/lib/localStorage';
+import { saveDraft, getLatestDraft, getDrafts, formatDraftDate, SensoryDraft, canUseApp } from '@/lib/localStorage';
 
 interface InputFormProps {
   onAnalyze: (data: {
@@ -207,10 +207,10 @@ export default function InputForm({ onAnalyze, isLoading = false, onDraftLoaded 
         <div className="flex gap-2">
           <Button
             type="submit"
-            disabled={isLoading || !text.trim() || !genre}
+            disabled={isLoading || !text.trim() || !genre || !canUseApp()}
             className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600"
           >
-            {isLoading ? 'Analyzing...' : 'Analyze Sensory Details'}
+            {isLoading ? 'Analyzing...' : !canUseApp() ? 'Usage Limit Reached' : 'Analyze Sensory Details'}
           </Button>
           
           <Button

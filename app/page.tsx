@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import InputForm from '@/components/InputForm';
 import SensoryRadarChart from '@/components/RadarChart';
 import FeedbackPanel from '@/components/FeedbackPanel';
 import ExportButton from '@/components/ExportButton';
 import RewriteSuggestions from '@/components/RewriteSuggestions';
-import { saveDraft, SensoryDraft } from '@/lib/localStorage';
+import { saveDraft, SensoryDraft, canUseApp, incrementUsage, getRemainingAnalyses } from '@/lib/localStorage';
 
 interface AnalysisResult {
   radar_scores: {
@@ -24,8 +24,19 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentInput, setCurrentInput] = useState<{ text: string; genre: string; sense: string } | null>(null);
+  const [remainingAnalyses, setRemainingAnalyses] = useState(3);
+
+  useEffect(() => {
+    setRemainingAnalyses(getRemainingAnalyses());
+  }, []);
 
   const handleAnalyze = async (data: { text: string; genre: string; sense: string }) => {
+    // Check usage limit before proceeding
+    if (!canUseApp()) {
+      setError("You've reached the free usage limit for this session.");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setCurrentInput(data);
@@ -46,6 +57,10 @@ export default function Home() {
 
       const result: AnalysisResult = await response.json();
       setAnalysisResult(result);
+
+      // Increment usage count after successful analysis
+      incrementUsage();
+      setRemainingAnalyses(getRemainingAnalyses());
 
       // Auto-save the draft with analysis results
       if (data.text.trim() && data.genre) {
@@ -85,8 +100,21 @@ export default function Home() {
       {/* Header */}
       <header className="border-b border-gray-800 p-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold text-white">Sensory Scribe</h1>
-          <p className="text-gray-400 mt-1">Analyze and improve sensory details in your fiction writing</p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-bold text-white">Sensory Scribe</h1>
+              <p className="text-gray-400 mt-1">Analyze and improve sensory details in your fiction writing</p>
+            </div>
+            <div className="text-right">
+              <div className={`text-sm font-medium ${remainingAnalyses === 0 ? 'text-red-400' : 'text-blue-400'}`}>
+                {remainingAnalyses > 0 
+                  ? `${remainingAnalyses} free analysis${remainingAnalyses !== 1 ? 'es' : ''} remaining`
+                  : 'Usage limit reached'
+                }
+              </div>
+              <div className="text-xs text-gray-500 mt-1">this session</div>
+            </div>
+          </div>
         </div>
       </header>
 
